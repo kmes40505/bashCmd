@@ -1,27 +1,42 @@
 #!/bin/bash
 
+function bk {
+    local lineCount=10;
+
+    if [ ! -e ${1} ];
+    then
+        lineCount=${1};
+    fi
+
+    for i in $(seq 1 $lineCount);
+    do
+        echo -e "\n";
+    done
+}
+
 function cdup {
     local count=1;
     local execmd="./";
     while [[ $count -le ${1} ]]; do
         execmd="${execmd}../";
-		((count+=1));
+        ((count+=1));
     done
     cd $execmd;
 }
 
 function permanentAlias {
-	if [ -z "${1}" -o -z "${2}" -o -z "${3}" ];
-	then
-		echo "3 input required for permanentAlias 1:name 2:content 3:file location";
-		return;
-	fi
+    if [ -z "${1}" -o -z "${2}" -o -z "${3}" ];
+    then
+        echo "3 input required for permanentAlias 1:name 2:content 3:file location";
+        return;
+    fi
 
     local aliasCmd="alias ${1}='${2}'";
     local location="${3}";
 
     if [ ! -e "$location" ];
     then
+        touch "$location";
         echo '#!/bin/bash' >> "$location";
     fi
 
@@ -29,15 +44,18 @@ function permanentAlias {
 
     local setStr="/^alias ${1}=.*/d";
     sed -i "$setStr" "$location";
+    sed -i '1d' "$location";
     echo ${aliasCmd} >> "$location";
+    sort -o "$location" "$location";
+    echo '#!/bin/bash'"$(echo '' && cat $location)" > "$location"
 }
 
 function rmPerAlias {
-	if [ -z "${1}" -o -z "${2}" ];
-	then
-		echo "2 input required for permanentAlias 1:name 2:file location";
-		return;
-	fi
+    if [ -z "${1}" -o -z "${2}" ];
+    then
+        echo "2 input required for permanentAlias 1:name 2:file location";
+        return;
+    fi
 
     local target="${2}";
     if [ ! -e "$target" ];
@@ -87,7 +105,7 @@ function setjump {
     fi
 
     local pwdPath=`printf "%q" "$(pwd)"`;
-	permanentAlias $name "cd $pwdPath" "$jumpRec";
+    permanentAlias $name "cd $pwdPath" "$jumpRec";
 }
 
 function rmjmp {
@@ -99,7 +117,7 @@ function rmjmp {
         echo "input required. i.e. remove jmptest requires input 'test'";
         return;
     else
-    	rmPerAlias "jmp"${1} "$target";
+        rmPerAlias "jmp"${1} "$target";
     fi
 }
 
@@ -108,12 +126,12 @@ function lsjmp {
 }
 
 function cpmulti {
-	local count=1;
-	while [[ $count -lt $# ]]; do
-		echo ${!count};
-		cp -r "${!count}" "${!#}";
-		((count+=1));
-	done
+    local count=1;
+    while [[ $count -lt $# ]]; do
+        echo ${!count};
+        cp -r "${!count}" "${!#}";
+        ((count+=1));
+    done
 }
 
 function setssh {
@@ -206,7 +224,7 @@ function cleanjmp {
         local dirPath=`echo $line | sed -n "s/.*alias jmp[^/]*\([^']*\).*/\1/p"`;
         if [ ! -z $cmdName ] && [ ! -e "$dirPath" ];
         then
-        echo $cmdName;
+            echo $cmdName;
             deleArray[idx]=$cmdName;
             ((idx+=1));
             continue;
@@ -215,7 +233,7 @@ function cleanjmp {
 
     for cmd in "${deleArray[@]}"
     do
-       rmjmp $cmd;
+        rmjmp $cmd;
     done
 
     unset deleArray;
@@ -224,4 +242,23 @@ function cleanjmp {
 function lscmd {
     local funcFile="$BashSetupPath/alias/generalFunc";
     sed -n "s/\(^ *function \(.*\) {.*\)/\2/p" "$funcFile";
+}
+
+function pwdlevel {
+    local pwdVal=`pwd`;
+    IFS='/' read -r -a array <<< "$pwdVal";
+    local level=${#array[@]};
+    ((level=level-1));
+    local resultStr="";
+    for element in "${array[@]}"
+    do
+        resultStr="$resultStr""[$level]""$element";
+        if [ "$level" -ne "0" ];
+        then
+            resultStr="$resultStr""/";
+        fi
+
+        ((level=level-1));
+    done
+    echo $resultStr;
 }
