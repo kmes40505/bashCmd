@@ -2,6 +2,8 @@
 
 ## Run ". ~/setup/index.sh" in .bashrc to setup the command. All commands are cross bash sessions
 
+bk {Number(optional)}: break {Number}(or default) lines
+
 cdup {Number}: go up {Number} level of directories
 
 setjump {Name(optional): string}: create a alias jmp{name} to cd to the current directory and save the command into a file for future terminal session
@@ -27,3 +29,5 @@ rmalias {Name: string}: remove alias {Name}
 lsalias: list all existing alias
 
 lscmd: list all commands
+
+pwdlevel: print directory level
